@@ -1,0 +1,3 @@
+[submodule "cpylmnl"]
+	path = cpylmnl
+	url = git@github.com:unixnut/cpylmnl.git
