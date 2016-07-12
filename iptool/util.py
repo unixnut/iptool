@@ -15,7 +15,7 @@ addr_scopes = { rtnl.RT_SCOPE_UNIVERSE: "global",
                 rtnl.RT_SCOPE_NOWHERE:  "nowhere" }
 
 operstates = { cpylmnl.linux.ifh.IF_OPER_UP: "up",
-               cpylmnl.linux.ifh.IF_OPER_NOTPRESENT: "notpresent",
+               cpylmnl.linux.ifh.IF_OPER_NOTPRESENT: "not-present",
                cpylmnl.linux.ifh.IF_OPER_DOWN: "down",
                cpylmnl.linux.ifh.IF_OPER_LOWERLAYERDOWN: "waiting",
                cpylmnl.linux.ifh.IF_OPER_TESTING: "testing",
