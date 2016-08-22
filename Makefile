@@ -15,3 +15,8 @@ install_scripts: $(DEST)/iptool
 
 $(DEST)/iptool: iptool/__main__.py
 	ln -s --force $$(pwd)/iptool/__main__.py $@
+
+$(DEST)/README.txt:
+	@echo "Certain scripts (those without owner write permission) have been" >> $@
+	@echo "installed here from source control work directories.  DO NOT EDIT THEM." >> $@
+	@echo README.txt installed
