@@ -94,7 +94,6 @@ def get_addr_info(s, chunk, interfaces):
         if attr.rta_type == if_addr.IFA_LABEL:
             info['name'] = ctypes.cast(rtnl.RTA_DATA(attr), ctypes.c_char_p).value
         elif attr.rta_type == if_addr.IFA_ADDRESS or attr.rta_type == if_addr.IFA_LOCAL:
-            # Only for VLANs, etc.; this is the ID of the real interface
             addr_len = rtnl.RTA_PAYLOAD(attr)
             addr_ptr = ctypes.cast(rtnl.RTA_DATA(attr),
                                    ctypes.POINTER((ctypes.c_ubyte * addr_len)))

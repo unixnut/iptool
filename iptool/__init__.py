@@ -161,7 +161,6 @@ class NetlinkSocket(object):
         return return_values
 
 
-
 # *** MAINLINE ***
 # See __main__.py
 # (Invoke with "python -m shepherd" under Python 2.7+, otherwise

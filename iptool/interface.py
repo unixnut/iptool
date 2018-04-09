@@ -121,15 +121,18 @@ class Interface(object):
 
     def show_addr_info(self, addr_info):
         extra_info = [util.decode_scope(addr_info['scope'])]
+        if extra_info == ['global']:
+            extra_info = []
         ## if self.info['flags'] & cpylmnl.linux.ifh.IFF_POINTOPOINT:
         if 'remote_addr' in addr_info:
             extra_info.append("remote: %s" % addr_info['remote_addr'])
         # Don't bother showing the flags because they're always just IFA_F_PERMANENT
         if 'name' in addr_info and addr_info['name'] != self.info['name']:
-            print "    %s: %s/%d (%s)" % (addr_info['name'], addr_info['addr'], addr_info['prefix'],
-                                          "; ".join(extra_info))
+            print util.add_extra("    %s: %s/%d" % (addr_info['name'], addr_info['addr'], addr_info['prefix']),
+                                 extra_info)
         else:
-            print "    %s/%d (%s)" % (addr_info['addr'], addr_info['prefix'], "; ".join(extra_info))
+            print util.add_extra("    %s/%d" % (addr_info['addr'], addr_info['prefix']),
+                                 extra_info)
             ## print "    %s/%d (%d [%04x])" % (addr_info['addr'], addr_info['prefix'], addr_info['scope'], addr_info['flags'])
         ## print "     ", unprocessed
 

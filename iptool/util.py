@@ -73,3 +73,12 @@ def decode_link_state(operstate, flags):
             return operstates[cpylmnl.linux.ifh.IF_OPER_UP]
         else:
             return operstates[cpylmnl.linux.ifh.IF_OPER_DOWN]
+
+
+def add_extra(s, l):
+    """Takes a string, and if there are any items in the list, appends parentheses
+    to the end, containing the list items separated by semicolons."""
+    if len(l) > 0:
+        return "%s (%s)" % (s, "; ".join(l))
+    else:
+        return s
