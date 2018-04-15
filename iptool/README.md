@@ -69,3 +69,6 @@ TO-DO
   - Show % suffixes for link-local addresses
   - Make NetlinkSocket::process_messages() use NetlinkSocket::process_rta_chain() 
   - Show bridging info
+  - Sort by interface type (as per ifaddr)
+  - Colorise as per iproute2
+  - Sub-commands for showing bridge and route info
