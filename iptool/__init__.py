@@ -1,3 +1,20 @@
+# Version: 1.0
+'''Description: iptool is designed to list interface info including IP addresses
+  It does so in a non-crazy format yet with as much useful info as possible.
+  In effect, it's a more sensible replacement for "ip addr show" that skips
+  information that you probably don't want (e.g. qdisc); also elides the IPv4
+  address alias if it's the same as the interface name.
+  
+Usage:
+  iptool [ -sig ] [ <interface> ]
+Options:
+  -s  --state-sort   Sorts by interface state, then name
+  -i  --id-sort      Sorts by interface ID
+  -g  --no-grouping  Don't sort by interface type (loopback, other, tunnel)
+  -vv                Show link-local addresses
+  -c  --compact      Don't show a blank line between interfaces
+'''
+
 from __future__ import absolute_import
 
 import sys
@@ -14,8 +31,16 @@ import cpylmnl.linux.if_addrh as if_addr
 
 from . import iplist
 from . import families
+from .globals import params
 
 
+self="iptool"
+allowed_options='hdsigcv'
+allowed_long_options=['help', 'state-sort', 'id-sort', 'no-grouping', 'compact', 'verbose']
+
+
+
+# *** CLASSES ***
 
 class NetlinkSocket(object):
     def __init__(self, proto):
@@ -161,6 +186,24 @@ class NetlinkSocket(object):
         return return_values
 
 
+# *** FUNCTIONS ***
+def show_help(dest=sys.stdout):
+    print >> dest, __doc__,
+
+
+def report_error(*msg):
+    print >> sys.stderr, self + ": Error:", msg
+
+
+def report_warning(*msg):
+    print >> sys.stderr, self + ": Warning:", msg
+
+
+def report_notice(*msg):
+    print >> sys.stderr, self + ": Notice:", msg
+
+
+
 # *** MAINLINE ***
 # See __main__.py
 # (Invoke with "python -m shepherd" under Python 2.7+, otherwise
@@ -169,11 +212,56 @@ class NetlinkSocket(object):
 def main(argv):
     """Acts like main() in a C program.  Return value is used as program exit code."""
 
+    global params
+
+    # == Command-line parsing ==
+    # -- defaults --
+    debug = 0
+    params['blank-lines'] = True
+    params['verbose'] = 0
+
+    # -- option handling --
+    try:
+        optlist, args = getopt.getopt(argv[1:], allowed_options, allowed_long_options)
+    except getopt.GetoptError, e:
+        report_error(e)
+        return 1
+
+    for option, opt_arg in optlist:
+        if option == "-s" or option == "--state-sort":
+            params['state-sort'] = True
+        if option == "-i" or option == "--id-sort":
+            params['id-sort'] = True
+        if option == "-g" or option == "--no-grouping":
+            params['no-grouping'] = True
+        if option == "-c" or option == "--compact":
+            params['blank-lines'] = False
+        elif option == "-v" or option == "--verbose":
+            params['verbose'] += 1
+        elif option == "-d":
+            debug += 1
+        elif option == "-h" or option == "--help":
+            show_help()
+            return 0
+
+    # -- argument checking --
+    ## if len(args) not in (2, 3):
+    ##     report_error("Invalid command-line parameters.")
+    ##     show_help(sys.stderr)
+    ##     return 1
+
     s = NetlinkSocket(socket.NETLINK_ROUTE)
     ## iplist.get_addr(s)
     interfaces = iplist.get_interfaces(s)
     addrs_by_interface = iplist.get_addrs(s, interfaces)
 
-    iplist.show_links(interfaces, addrs_by_interface)
+    if len(args) == 1:
+        matching_ids = [i for i in interfaces if interfaces[i].info['name'] == args[0]]
+        matching_interfaces = {}
+        for i in matching_ids:
+            matching_interfaces[i] = interfaces[i]
+        iplist.show_links(matching_interfaces, addrs_by_interface)
+    else:
+        iplist.show_links(interfaces, addrs_by_interface)
 
     ## print addrs_by_interface.keys()

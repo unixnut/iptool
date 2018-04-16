@@ -47,8 +47,8 @@ in addition to other conditions.)
 |                      | IF_OPER_LOWERLAYERDOWN | waiting        |                   |
 |                      | IF_OPER_TESTING        | testing        |                   |
 |                      | IF_OPER_DORMANT        | dormant        |                   |
-| IFF_LOWER_UP set     | IF_OPER_UNKNOWN        | down           | No enhanced state |
-| IFF_LOWER_UP not set | IF_OPER_UNKNOWN        | up             | No enhanced state |
+| IFF_LOWER_UP set     | IF_OPER_UNKNOWN        | up             | No enhanced state |
+| IFF_LOWER_UP not set | IF_OPER_UNKNOWN        | down           | No enhanced state |
 
 
 TO-DO
@@ -57,18 +57,15 @@ TO-DO
   - MTU
   - By default, elide link-local addresses, interface IDs (and VLAN parent IDs),
     MTU and MAC addresses
-  - `-g` shows global addresses only
+  - `-a` shows global addresses only
   - `-v` show MAC addresses and MTU
-  - `-vv` also show interface IDs and link-local addresses
+  - `-vv` also show interface IDs, address flags and link-local addresses
+  - `-o` only shows enabled interfaces
   - `-t` shows multiple addresses per line (link scope at start)
-  - `-s` sorts by interface state, then name
-  - `-i` sorts by interface ID
   - Sort addresses by octet/word (":" comes first)
   - Make interface name bold and use colours for Friendly state
-  - Omit link scope if global (some trickery reqd when showing PtoP addresses)
+  - Colorise as per iproute2
   - Show % suffixes for link-local addresses
   - Make NetlinkSocket::process_messages() use NetlinkSocket::process_rta_chain() 
-  - Show bridging info
-  - Sort by interface type (as per ifaddr)
-  - Colorise as per iproute2
+  - Show bridging info for interfaces
   - Sub-commands for showing bridge and route info

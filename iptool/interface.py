@@ -8,6 +8,7 @@ import cpylmnl.linux.if_linkh as if_link
 import cpylmnl.linux.if_addrh as if_addr
 
 from . import util
+from .globals import params
 
 
 class Interface(object):
@@ -15,12 +16,21 @@ class Interface(object):
     def cmp(self, a, b):
         """Allows sorts interfaces by name.  Forces the loopback interface to
         be first in the sequence."""
+
         ## if a.info['name'] == "lo":
-        if a.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK != \
+        if not params['no-grouping'] and \
+           a.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK != \
            b.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK:
             # The maths works on the bit in each flags word
             return cmp(b.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK,
                        a.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK)
+        elif not params['no-grouping'] and \
+             a.is_tun() != b.is_tun():
+            return cmp(a.is_tun(), b.is_tun())
+        elif params['state-sort'] and a.get_state() != b.get_state():
+            return cmp(b.get_state(), a.get_state())
+        elif params['id-sort']:
+            return cmp(a.info['id'], b.info['id'])
         else:
             return cmp(a.info['name'], b.info['name'])
 
@@ -81,7 +91,7 @@ class Interface(object):
 
     def show_link_info(self, addrs):
         t = self.info['link_type']
-        extra_info = [util.decode_link_state(self.info['state'], self.info['flags'])]
+        extra_info = [self.get_state()]
         extra_info.append("ID: %d" % self.info['id'])
         if 'hwaddr' in self.info and t != 'loopback':
             extra_info.append("MAC addr: " + self.info['hwaddr'])
@@ -107,13 +117,27 @@ class Interface(object):
             print "%s (%s; %s):" % (self.info['name'], t, "; ".join(extra_info))
         ## print "   ", unprocessed
 
-        self.show_addrs(self.info['id'], addrs)
+        self.show_addrs(self.info['id'], addrs, params['verbose'] >= 2)
 
 
-    def show_addrs(self, i, addrs):
+    def get_state(self):
+        return util.decode_link_state(self.info['state'], self.info['flags'])
+
+
+    def is_tun(self):
+        return self.info['link_type'] == "tun" or \
+                'link_info' in self.info and 'kind' in self.info['link_info'] and self.info['link_info']['kind'] == "tun"
+
+
+    def show_addrs(self, i, addrs, include_link_local = True):
         if i in addrs:
             ## TO-DO: sort
-            for addr in addrs[i]:
+            if_addrs = [addr for addr in addrs[i] if addr['scope'] != rtnl.RT_SCOPE_LINK or include_link_local]
+        else:
+            if_addrs = []
+
+        if if_addrs:
+            for addr in if_addrs:
                 self.show_addr_info(addr)
         else:
             print "    no addresses"
@@ -126,7 +150,8 @@ class Interface(object):
         ## if self.info['flags'] & cpylmnl.linux.ifh.IFF_POINTOPOINT:
         if 'remote_addr' in addr_info:
             extra_info.append("remote: %s" % addr_info['remote_addr'])
-        # Don't bother showing the flags because they're always just IFA_F_PERMANENT
+        # Only show the flags if they're not just IFA_F_PERMANENT
+        ## addr_info['flags']
         if 'name' in addr_info and addr_info['name'] != self.info['name']:
             print util.add_extra("    %s: %s/%d" % (addr_info['name'], addr_info['addr'], addr_info['prefix']),
                                  extra_info)
@@ -134,7 +159,6 @@ class Interface(object):
             print util.add_extra("    %s/%d" % (addr_info['addr'], addr_info['prefix']),
                                  extra_info)
             ## print "    %s/%d (%d [%04x])" % (addr_info['addr'], addr_info['prefix'], addr_info['scope'], addr_info['flags'])
-        ## print "     ", unprocessed
 
 
     def __getattr__(self, a):

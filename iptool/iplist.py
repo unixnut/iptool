@@ -13,6 +13,7 @@ import cpylmnl.linux.ifh
 
 from .interface import Interface
 from . import util
+from .globals import params
 
 
 def pointer_add(p, i):
@@ -34,7 +35,11 @@ def get_interfaces(s):
 
 
 def show_links(interfaces, addrs_by_interface):
+    count = 0
     for i in sorted(interfaces.values(), Interface.cmp):
+        count += 1
+        if params['blank-lines'] and count > 1:
+            print
         i.show_link_info(addrs_by_interface)
 
 
@@ -47,7 +52,7 @@ def get_link_info(s, chunk):
 def get_addrs(s, interfaces, family = None):
     """Match semantics only work for address family, so do a dump and return an
     associative array (indexed by interface ID) of arrays of address info (each
-    elemnt being an associative array)."""
+    element being an associative array)."""
 
     if family is None:
         payload = rtnl.Rtgenmsg()
