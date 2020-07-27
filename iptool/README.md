@@ -69,3 +69,6 @@ TO-DO
   - Make NetlinkSocket::process_messages() use NetlinkSocket::process_rta_chain() 
   - Show bridging info for interfaces
   - Sub-commands for showing bridge and route info
+  - decode VLAN flags: 00c8
+  - decode unknown rtattr of type 3 (len: 4) -- found on a bridge interface
+  - Use "socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)" and SIOCETHTOOL to get link speed

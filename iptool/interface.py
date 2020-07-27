@@ -78,6 +78,7 @@ class Interface(object):
                 self.info['link_info'] = s.process_rta_chain(data_ptr, util.link_info_rtattr_map, self)
             else:
                 unprocessed.append(attr.rta_type)
+            # IFLA_GROUP
 
             # Post-process the link_type if we have better information
             if self.info['link_type'] == "other" and \
@@ -87,6 +88,8 @@ class Interface(object):
 
             # advance to the next Rtattr
             attr, bytes_remaining = rtnl.RTA_NEXT(attr, bytes_remaining)
+
+        ## print "   ", unprocessed
 
 
     def show_link_info(self, addrs):
@@ -115,7 +118,6 @@ class Interface(object):
                                          t, "; ".join(extra_info))
         else:
             print "%s (%s; %s):" % (self.info['name'], t, "; ".join(extra_info))
-        ## print "   ", unprocessed
 
         self.show_addrs(self.info['id'], addrs, params['verbose'] >= 2)
 
@@ -156,8 +158,13 @@ class Interface(object):
             print util.add_extra("    %s: %s/%d" % (addr_info['name'], addr_info['addr'], addr_info['prefix']),
                                  extra_info)
         else:
-            print util.add_extra("    %s/%d" % (addr_info['addr'], addr_info['prefix']),
-                                 extra_info)
+            ## print addr_info
+            if 'addr' in addr_info:
+                print util.add_extra("    %s/%d" % (addr_info['addr'], addr_info['prefix']),
+                                     extra_info)
+            else:
+                print util.add_extra("    no local address",
+                                     extra_info)
             ## print "    %s/%d (%d [%04x])" % (addr_info['addr'], addr_info['prefix'], addr_info['scope'], addr_info['flags'])
 
 

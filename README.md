@@ -7,7 +7,11 @@ and `brctl` commands; the modules in this package show info only.
 Contains two modules:
 
   - [iptool](iptool): Lists interface info including IP addresses in a non-crazy format
-  - [cpylmnl](cpylmnl): Submodle (https://github.com/unixnut/cpylmnl) forked from [chamaken/cpylmnl](https://github.com/chamaken/cpylmnl) in order to fix bugs
+  - [cpylmnl](cpylmnl): Submodule (https://github.com/unixnut/cpylmnl) forked from [chamaken/cpylmnl](https://github.com/chamaken/cpylmnl) in order to fix bugs
+
+In future, the `route` module will show routing tables in a tabular
+format.  (See `iproute` in https://github.com/unixnut/scripts for a
+prototype written in Bash.)
 
 Installation
 ============

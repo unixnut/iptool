@@ -1,4 +1,3 @@
-# Version: 1.0
 '''Description: iptool is designed to list interface info including IP addresses
   It does so in a non-crazy format yet with as much useful info as possible.
   In effect, it's a more sensible replacement for "ip addr show" that skips
@@ -16,6 +15,8 @@ Options:
 '''
 
 from __future__ import absolute_import
+
+__version__ = "1.0.1"
 
 import sys
 import getopt
