@@ -5,7 +5,7 @@
   address alias if it's the same as the interface name.
   
 Usage:
-  iptool [ -sig ] [ <interface> ]
+  iptool [ -sigc ] [ <interface> ]
 Options:
   -s  --state-sort   Sorts by interface state, then name
   -i  --id-sort      Sorts by interface ID
@@ -14,9 +14,9 @@ Options:
   -c  --compact      Don't show a blank line between interfaces
 '''
 
-from __future__ import absolute_import
 
-__version__ = "1.0.1"
+
+__version__ = "1.1.0"
 
 import sys
 import getopt
@@ -72,8 +72,8 @@ class NetlinkSocket(object):
         ctypes.memmove(buf, ctypes.addressof(self.hdr), netlink.NLMSG_HDRLEN)
         ctypes.memmove(ctypes.addressof(buf) + netlink.NLMSG_HDRLEN, ctypes.addressof(payload), payload_len)
 
-        ## print "Sending", len(buf.raw), "bytes:"
-        ## print "  ", binascii.hexlify(buf.raw)
+        ## print("Sending", len(buf.raw), "bytes:")
+        ## print("  ", binascii.hexlify(buf.raw))
         self.sock.send(buf.raw)
 
         self.msg_type = msg_type
@@ -81,7 +81,7 @@ class NetlinkSocket(object):
 
     def recv_msg(self, maxsize):
         rdata = self.sock.recv(maxsize)
-        ## print len(rdata), "bytes received!"
+        ## print(len(rdata), "bytes received!")
         return ctypes.create_string_buffer(rdata, len(rdata))
 
 
@@ -95,7 +95,7 @@ class NetlinkSocket(object):
         hdr = netlink.Nlmsghdr.from_pointer(buf)
         if hdr.nlmsg_flags == netlink.NLM_F_MULTI:
             while hdr.nlmsg_type != netlink.NLMSG_DONE:
-                ## print "... message type =", hdr.nlmsg_type
+                ## print("... message type =", hdr.nlmsg_type)
                 buf = self.recv_msg(8192)
                 msgs.append(buf)
                 hdr = netlink.Nlmsghdr.from_pointer(buf)
@@ -121,20 +121,20 @@ class NetlinkSocket(object):
             # ptr walks through the buffer, pointing at each message
             ptr = buf_ptr
             while ptr.value - buf_ptr.value < len(buf):
-                ## print "Processed %d of %d bytes" % (ptr.value - buf_ptr.value, len(buf))
+                ## print("Processed %d of %d bytes" % (ptr.value - buf_ptr.value, len(buf)))
                 # Map a header pointer to the start of the message
                 hdr = netlink.Nlmsghdr.from_pointer(ptr)
-                ## print "internal message len = ", hdr.nlmsg_len 
-                ## print "message type = %d [%d]" % (hdr.nlmsg_type, hdr.nlmsg_seq)
+                ## print("internal message len = ", hdr.nlmsg_len)
+                ## print("message type = %d [%d]" % (hdr.nlmsg_type, hdr.nlmsg_seq))
                 if hdr.nlmsg_type != netlink.NLMSG_DONE:
                     # Compare the RTNL_FAMILY_* values of the request and response
-                    ## print "fam = %d (expected %d)" % (rtnl.RTM_FAM(hdr.nlmsg_type), rtnl.RTM_FAM(expected_type))
+                    ## print("fam = %d (expected %d)" % (rtnl.RTM_FAM(hdr.nlmsg_type), rtnl.RTM_FAM(expected_type)))
                     if rtnl.RTM_FAM(hdr.nlmsg_type) != rtnl.RTM_FAM(expected_type):
                         if rtnl.RTM_FAM(expected_type) == families.RTNL_FAMILY_ADDR and \
                            rtnl.RTM_FAM(hdr.nlmsg_type) == families.RTNL_FAMILY_LINK:
-                            print "extra link message"
+                            print("extra link message")
                         else:
-                            print >> sys.stderr, "bad type! (%s)" % hdr.nlmsg_type
+                            print("bad type! (%s)" % hdr.nlmsg_type, file=sys.stderr)
                             sys.exit(3)
                     else:
                         # Process the message
@@ -167,7 +167,7 @@ class NetlinkSocket(object):
         attr = rtnl.Rtattr.from_address(ctypes.addressof(data.contents))
 
         while bytes_remaining > 0:
-            ## print attr.rta_type
+            ## print(attr.rta_type)
             if attr.rta_type in table:
                 if type(table[attr.rta_type]) == types.FunctionType:
                     label, info = table[attr.rta_type](attr.rta_type, rtnl.RTA_DATA(attr), meta)
@@ -189,19 +189,19 @@ class NetlinkSocket(object):
 
 # *** FUNCTIONS ***
 def show_help(dest=sys.stdout):
-    print >> dest, __doc__,
+    print(__doc__, end='', file=dest)
 
 
 def report_error(*msg):
-    print >> sys.stderr, self + ": Error:", msg
+    print(self + ": Error:", msg, file=sys.stderr)
 
 
 def report_warning(*msg):
-    print >> sys.stderr, self + ": Warning:", msg
+    print(self + ": Warning:", msg, file=sys.stderr)
 
 
 def report_notice(*msg):
-    print >> sys.stderr, self + ": Notice:", msg
+    print(self + ": Notice:", msg, file=sys.stderr)
 
 
 
@@ -224,7 +224,7 @@ def main(argv):
     # -- option handling --
     try:
         optlist, args = getopt.getopt(argv[1:], allowed_options, allowed_long_options)
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         report_error(e)
         return 1
 
@@ -265,4 +265,4 @@ def main(argv):
     else:
         iplist.show_links(interfaces, addrs_by_interface)
 
-    ## print addrs_by_interface.keys()
+    ## print(addrs_by_interface.keys())

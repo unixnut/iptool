@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 """Universal package entry point.
 
 Determines the name of the package this file resides in, imports it and runs
@@ -28,12 +28,12 @@ def robust_import(package_name, filename):
         # assume this file's parent dir (and thereby that of the package)
         # is already present in sys.path
         return __import__(package_name) 
-    except ImportError, e:
+    except ImportError as e:
         # Scenario 1b: script is being run in-place manually
         #
         # We can add the package's parent dir to sys.path and retry the import
         sys.path.insert(0, dirname(dirname(filename)))
-        ## print sys.path[0]
+        ## print(sys.path[0])
         return __import__(package_name) 
 
 
@@ -61,7 +61,7 @@ try:
             # Use the directory of the file that the script points to to
             # determine the package name
             package_name = basename(dirname(realpath(__file__)))
-            ## print package_name
+            ## print(package_name)
             package = robust_import(package_name, realpath(__file__))
         else:
             # Scenario 3: script is a copy of__main__.py
@@ -71,11 +71,10 @@ try:
             # there is no way to determine it programatically
             package_name, ext = splitext(basename(__file__))
             package = __import__(package_name) 
-except ImportError, e:
+except ImportError as e:
     # If the top-level import failed, be polite
     if str(e) == "No module named " + package_name:
-        print >> sys.stderr, \
-          "%s: Error: Can't find package '%s'" % (__file__, package_name)
+        print("%s: Error: Can't find package '%s'" % (__file__, package_name), file=sys.stderr)
         sys.exit(99)
     else:
         # Otherwise it's a coding error or dependency failure

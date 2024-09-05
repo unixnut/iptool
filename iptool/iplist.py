@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import sys
 import socket
 import ctypes
@@ -36,10 +34,10 @@ def get_interfaces(s):
 
 def show_links(interfaces, addrs_by_interface):
     count = 0
-    for i in sorted(interfaces.values(), Interface.cmp):
+    for i in sorted(interfaces.values()):
         count += 1
         if params['blank-lines'] and count > 1:
-            print
+            print()
         i.show_link_info(addrs_by_interface)
 
 
@@ -80,7 +78,7 @@ def get_addrs(s, interfaces, family = None):
 
 # @param chunk    A pointer to an array of the size of the sub-buffer
 def get_addr_info(s, chunk, interfaces):
-    ## print "sub-buffer length:", len(chunk.contents)
+    ## print("sub-buffer length:", len(chunk.contents))
     ifaddrmsg = if_addr.Ifaddrmsg.from_pointer(chunk)
     interface_info = interfaces[ifaddrmsg.ifa_index]
 
@@ -97,7 +95,7 @@ def get_addr_info(s, chunk, interfaces):
     unprocessed = []
     while bytes_remaining > 0:
         if attr.rta_type == if_addr.IFA_LABEL:
-            info['name'] = ctypes.cast(rtnl.RTA_DATA(attr), ctypes.c_char_p).value
+            info['name'] = ctypes.cast(rtnl.RTA_DATA(attr), ctypes.c_char_p).value.decode('ascii')
         elif attr.rta_type == if_addr.IFA_ADDRESS or attr.rta_type == if_addr.IFA_LOCAL:
             addr_len = rtnl.RTA_PAYLOAD(attr)
             addr_ptr = ctypes.cast(rtnl.RTA_DATA(attr),
@@ -112,14 +110,14 @@ def get_addr_info(s, chunk, interfaces):
         elif attr.rta_type == if_addr.IFA_FLAGS:
             # This overrides ifaddrmsg.ifa_flags
             ## if 'flags' in info:
-            ##     print "orig =", info['flags']
+            ##     print("orig =", info['flags'])
             info['flags'] = (ctypes.cast(rtnl.RTA_DATA(attr),
                                          ctypes.POINTER(ctypes.c_uint))).contents.value
-            ## print "new =", info['flags']
+            ## print("new =", info['flags'])
         else:
             unprocessed.append(attr.rta_type)
             ## info[attr.rta_type] = 
-            ## print binascii.hexlify(ctypes.cast(rtnl.RTA_DATA(attr), ctypes.POINTER(ctypes.c_char))[0:rtnl.RTA_PAYLOAD(attr)])
+            ## print(binascii.hexlify(ctypes.cast(rtnl.RTA_DATA(attr), ctypes.POINTER(ctypes.c_char))[0:rtnl.RTA_PAYLOAD(attr)]))
 
         attr, bytes_remaining = rtnl.RTA_NEXT(attr, bytes_remaining)
 

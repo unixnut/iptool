@@ -42,7 +42,7 @@ link_data_rtattr_map = { if_link.IFLA_VLAN_ID: vlan_rtattr_handler,
                          if_addr.IFA_UNSPEC: default_rtattr_handler }
 
 def link_kind_rtattr_handler(id, data, meta):
-    return 'kind', ctypes.cast(data, ctypes.c_char_p).value
+    return 'kind', ctypes.cast(data, ctypes.c_char_p).value.decode('ascii')
 
 link_info_rtattr_map = { if_link.IFLA_INFO_KIND: link_kind_rtattr_handler,
                          if_link.IFLA_INFO_DATA: ('data', link_data_rtattr_map),

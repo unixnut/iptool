@@ -1,5 +1,6 @@
 import socket
 import ctypes
+import functools
 
 import cpylmnl.linux.netlinkh as netlink
 import cpylmnl.linux.rtnetlinkh as rtnl
@@ -12,41 +13,46 @@ from .globals import params
 
 
 class Interface(object):
-    @classmethod
-    def cmp(self, a, b):
-        """Allows sorts interfaces by name.  Forces the loopback interface to
-        be first in the sequence."""
+    def __lt__(a, b):
+        """
+        Allows sorting of interfaces by name.  Forces the loopback interface to
+        be first in the sequence.
+        """
 
         ## if a.info['name'] == "lo":
         if not params['no-grouping'] and \
            a.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK != \
            b.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK:
             # The maths works on the bit in each flags word
-            return cmp(b.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK,
-                       a.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK)
+            return (a.info['flags'] & cpylmnl.linux.ifh.IFF_LOOPBACK) > 0
         elif not params['no-grouping'] and \
              a.is_tun() != b.is_tun():
-            return cmp(a.is_tun(), b.is_tun())
+            return b.is_tun()   # Tunnel interfaces come later
         elif params['state-sort'] and a.get_state() != b.get_state():
-            return cmp(b.get_state(), a.get_state())
+            return b.get_state() < a.get_state()
         elif params['id-sort']:
-            return cmp(a.info['id'], b.info['id'])
+            return a.info['id'] < b.info['id']
         else:
-            return cmp(a.info['name'], b.info['name'])
+            return a.info['name'] < b.info['name']
+
+
+    ## @classmethod
+    ## def get_sort_key_fn(cls):
+    ##     return functools.cmp_to_key(cls.cmp)
 
 
     # Warning: don't store ifinfomsg header or data because the buffer it's in
     # could be garbage collected
     def __init__(self, s, chunk):
-        ## print "sub-buffer length:", len(chunk.contents)
+        ## print("sub-buffer length:", len(chunk.contents))
         ifinfomsg = rtnl.Ifinfomsg.from_pointer(chunk)
-        ## print binascii.hexlify(ctypes.cast(chunk, ctypes.POINTER(ctypes.c_char))[0:16])
-        ## print "%d (%d)" % (ifinfomsg.ifi_index, ifinfomsg.ifi_type)
+        ## print(binascii.hexlify(ctypes.cast(chunk, ctypes.POINTER(ctypes.c_char))[0:16]))
+        ## print("%d (%d)" % (ifinfomsg.ifi_index, ifinfomsg.ifi_type))
 
         # Find the first Rtattr
         offset = netlink.NLMSG_ALIGN(ctypes.sizeof(ifinfomsg))
         bytes_remaining = len(chunk.contents) - offset
-        ## print bytes_remaining, "..."
+        ## print(bytes_remaining, "...")
         ## attr = rtnl.Rtattr.from_address(ctypes.addressof(chunk.contents) + offset)
         attr = if_link.IFLA_RTA(chunk.contents)
 
@@ -57,9 +63,9 @@ class Interface(object):
         unprocessed = []
         while bytes_remaining > 0:
             data_ptr = rtnl.RTA_DATA(attr)
-            ## print "type:", attr.rta_type
+            ## print("type:", attr.rta_type)
             if attr.rta_type == if_link.IFLA_IFNAME:
-                self.info['name'] = ctypes.cast(data_ptr, ctypes.c_char_p).value
+                self.info['name'] = ctypes.cast(data_ptr, ctypes.c_char_p).value.decode('ascii')
             elif attr.rta_type == if_link.IFLA_LINK:
                 # Only for VLANs, etc.; this is the ID of the real interface
                 self.info['parent_link'] = (ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_int))).contents.value
@@ -89,7 +95,7 @@ class Interface(object):
             # advance to the next Rtattr
             attr, bytes_remaining = rtnl.RTA_NEXT(attr, bytes_remaining)
 
-        ## print "   ", unprocessed
+        ## print("   ", unprocessed)
 
 
     def show_link_info(self, addrs):
@@ -114,10 +120,10 @@ class Interface(object):
                     extra_info.append(self.info['link_info']['data']['unknown'])
 
         if 'parent_link' in self.info:
-            print "%s [%d] (%s; %s):" % (self.info['name'], self.info['parent_link'],
-                                         t, "; ".join(extra_info))
+            print("%s [%d] (%s; %s):" % (self.info['name'], self.info['parent_link'],
+                                         t, "; ".join(extra_info)))
         else:
-            print "%s (%s; %s):" % (self.info['name'], t, "; ".join(extra_info))
+            print("%s (%s; %s):" % (self.info['name'], t, "; ".join(extra_info)))
 
         self.show_addrs(self.info['id'], addrs, params['verbose'] >= 2)
 
@@ -142,7 +148,7 @@ class Interface(object):
             for addr in if_addrs:
                 self.show_addr_info(addr)
         else:
-            print "    no addresses"
+            print("    no addresses")
 
 
     def show_addr_info(self, addr_info):
@@ -155,16 +161,16 @@ class Interface(object):
         # Only show the flags if they're not just IFA_F_PERMANENT
         ## addr_info['flags']
         if 'name' in addr_info and addr_info['name'] != self.info['name']:
-            print util.add_extra("    %s: %s/%d" % (addr_info['name'], addr_info['addr'], addr_info['prefix']),
-                                 extra_info)
+            print(util.add_extra("    %s: %s/%d" % (addr_info['name'], addr_info['addr'], addr_info['prefix']),
+                                 extra_info))
         else:
             ## print addr_info
             if 'addr' in addr_info:
-                print util.add_extra("    %s/%d" % (addr_info['addr'], addr_info['prefix']),
-                                     extra_info)
+                print(util.add_extra("    %s/%d" % (addr_info['addr'], addr_info['prefix']),
+                                     extra_info))
             else:
-                print util.add_extra("    no local address",
-                                     extra_info)
+                print(util.add_extra("    no local address",
+                                     extra_info))
             ## print "    %s/%d (%d [%04x])" % (addr_info['addr'], addr_info['prefix'], addr_info['scope'], addr_info['flags'])
 
 
